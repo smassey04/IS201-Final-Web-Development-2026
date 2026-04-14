@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snake Game</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+/* NAVBAR */
+nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 25px;
+    background: #111827;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 15px;
+}
+
+canvas {
+    background: #111827;
+    display: block;
+    margin: 20px auto;
+    border: 2px solid #334155;
+}
+
+#gameOver {
+    display: none;
+    margin-top: 20px;
+}
+
+button {
+    padding: 10px 15px;
+    margin-top: 10px;
+    border: none;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+    <div><strong>Snake Game</strong></div>
+    <div>
+        <a href="index.html">Home</a>
+        <a href="resume.html">Resume</a>
+        <a href="scratch.html">Scratch</a>
+    </div>
+</nav>
+
+<h2>Score: <span id="score">0</span></h2>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<div id="gameOver">
+    <h2>Game Over</h2>
+    <button onclick="restart()">Restart</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const grid = 20;
+
+let snake, apple, score, running;
+let lastTime = 0;
+let speed = 120; // higher = slower game
+
+function init() {
+    snake = {
+        x: 160,
+        y: 160,
+        dx: grid,
+        dy: 0,
+        cells: [],
+        maxCells: 4
+    };
+
+    apple = {
+        x: 320,
+        y: 320
+    };
+
+    score = 0;
+    running = true;
+
+    document.getElementById("score").innerText = score;
+    document.getElementById("gameOver").style.display = "none";
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function loop(timestamp) {
+    if (!running) return;
+
+    requestAnimationFrame(loop);
+
+    if (timestamp - lastTime < speed) return;
+    lastTime = timestamp;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    snake.x += snake.dx;
+    snake.y += snake.dy;
+
+    // WALL COLLISION (GAME OVER)
+    if (
+        snake.x < 0 ||
+        snake.x >= canvas.width ||
+        snake.y < 0 ||
+        snake.y >= canvas.height
+    ) {
+        running = false;
+        document.getElementById("gameOver").style.display = "block";
+        return;
+    }
+
+    snake.cells.unshift({x: snake.x, y: snake.y});
+
+    if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+    }
+
+    // draw apple
+    ctx.fillStyle = "red";
+    ctx.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+    // draw snake
+    ctx.fillStyle = "lime";
+
+    snake.cells.forEach((cell, index) => {
+        ctx.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+
+        // eat apple
+        if (cell.x === apple.x && cell.y === apple.y) {
+            snake.maxCells++;
+            score++;
+            document.getElementById("score").innerText = score;
+
+            apple.x = getRandomInt(0, 20) * grid;
+            apple.y = getRandomInt(0, 20) * grid;
+        }
+
+        // self collision = game over
+        for (let i = index + 1; i < snake.cells.length; i++) {
+            if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                running = false;
+                document.getElementById("gameOver").style.display = "block";
+                return;
+            }
+        }
+    });
+}
+
+document.addEventListener("keydown", function(e) {
+    if (e.key === "ArrowLeft" && snake.dx === 0) {
+        snake.dx = -grid; snake.dy = 0;
+    }
+    else if (e.key === "ArrowUp" && snake.dy === 0) {
+        snake.dy = -grid; snake.dx = 0;
+    }
+    else if (e.key === "ArrowRight" && snake.dx === 0) {
+        snake.dx = grid; snake.dy = 0;
+    }
+    else if (e.key === "ArrowDown" && snake.dy === 0) {
+        snake.dy = grid; snake.dx = 0;
+    }
+});
+
+function restart() {
+    init();
+    requestAnimationFrame(loop);
+}
+
+init();
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
